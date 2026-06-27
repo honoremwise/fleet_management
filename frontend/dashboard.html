@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Management Dashboard</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h2>FleetMS</h2>
+        </div>
+
+        <ul class="menu">
+            <li><a href="#" onclick="loadPage('dashboard')">🏠 Dashboard</a></li>
+            <li><a href="#" onclick="loadPage('vehicles')">🚚 Vehicles</a></li>
+            <li><a href="#" onclick="loadPage('drivers')">👨 Drivers</a></li>
+            <li><a href="#" onclick="loadPage('routes')">🛣 Routes</a></li>
+            <li><a href="#" onclick="loadPage('trips')">📋 Trips</a></li>
+            <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+        </ul>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Header -->
+        <div class="header">
+
+            <div>
+                <h1>Fleet Management Dashboard</h1>
+                <p>
+                    Welcome,
+                    <strong id="username"></strong>
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="cards">
+
+            <div class="card" onclick="loadPage('vehicles')">
+                <h3>Vehicles</h3>
+                <h1 id="vehicleCount">0</h1>
+            </div>
+
+            <div class="card" onclick="loadPage('drivers')">
+                <h3>Drivers</h3>
+                <h1 id="driverCount">0</h1>
+            </div>
+
+            <div class="card" onclick="loadPage('routes')">
+                <h3>Routes</h3>
+                <h1 id="routeCount">0</h1>
+            </div>
+
+            <div class="card" onclick="loadPage('trips')">
+                <h3>Trips</h3>
+                <h1 id="tripCount">0</h1>
+            </div>
+
+        </div>
+
+        <!-- Dynamic Content -->
+        <!-- <div id="content">
+
+            <div class="welcome-box">
+
+                <h2>Welcome to Fleet Management System</h2>
+
+                <p>
+                    Use the navigation menu on the left to manage vehicles,
+                    drivers, routes and trips.
+                </p>
+
+            </div>
+
+        </div> -->
+<div id="content"></div>
+
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/vehicles.js"></script>
+<script src="js/drivers.js"></script>
+<script src="js/routes.js"></script>
+<script src="js/trips.js"></script>
+    </main>
+
+</div>
+
+<!-- <script src="js/api.js"></script>
+<script src="js/dashboard.js"></script> -->
+
+</body>
+</html>

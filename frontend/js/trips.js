@@ -1,0 +1,846 @@
+// =======================================
+// Trip Module
+// =======================================
+
+async function loadTrips() {
+
+    const content = document.getElementById("content");
+
+    content.innerHTML = `
+
+        <div class="page-header">
+
+            <h2>Trip Management</h2>
+
+            <button class="btn btn-success" onclick="showTripForm()">
+                + Schedule Trip
+            </button>
+
+        </div>
+
+        <div id="tripForm"></div>
+
+<div class="table-toolbar">
+
+    <input
+        type="text"
+        id="searchTrip"
+        placeholder="🔍 Search by vehicle, driver or route..."
+        onkeyup="filterTrips()"
+    >
+
+    <select
+        id="tripStatusFilter"
+        onchange="filterTrips()">
+
+        <option value="">All Status</option>
+
+        <option value="planned">
+            Planned
+        </option>
+
+        <option value="ongoing">
+            Ongoing
+        </option>
+
+        <option value="completed">
+            Completed
+        </option>
+
+    </select>
+
+    <button
+        class="btn btn-primary"
+        onclick="resetTripFilter()">
+
+        Reset
+
+    </button>
+
+</div>
+
+<p id="tripResults"></p>
+
+<table>
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Vehicle</th>
+                    <th>Driver</th>
+                    <th>Route</th>
+                    <th>Departure</th>
+                    <th>Arrival</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="tripTableBody"></tbody>
+
+        </table>
+
+    `;
+
+    fetchTrips();
+
+}
+
+
+
+// =======================================
+// Fetch Trips
+// =======================================
+
+async function fetchTrips() {
+
+    const response = await fetch(
+
+        `${API_BASE_URL}/trips/`,
+
+        {
+
+            headers: {
+
+                Authorization:
+                    `Token ${localStorage.getItem("token")}`
+
+            }
+
+        }
+
+    );
+
+    const trips = await response.json();
+
+    const tbody =
+        document.getElementById("tripTableBody");
+
+    tbody.innerHTML = "";
+
+    trips.forEach(trip => {
+
+        tbody.innerHTML += `
+
+            <tr>
+
+                <td>${trip.vehicle_plate}</td>
+
+                <td>${trip.driver_name}</td>
+
+                <td>${trip.route_name}</td>
+
+                <td>${trip.departure_time}</td>
+
+                <td>${trip.arrival_time}</td>
+
+                <td>${trip.status}</td>
+
+                <td>
+
+                    <button
+                        class="btn btn-warning"
+                        onclick="editTrip(${trip.id})">
+
+                        Edit
+
+                    </button>
+
+                    <button
+                        class="btn btn-danger"
+                        onclick="deleteTrip(${trip.id})">
+
+                        Delete
+
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+}
+
+function filterTrips(){
+
+    const search =
+        document.getElementById("searchTrip")
+            .value
+            .toLowerCase();
+
+    const status =
+        document.getElementById("tripStatusFilter")
+            .value
+            .toLowerCase();
+
+    const rows =
+        document.querySelectorAll("#tripTableBody tr");
+
+    let visible = 0;
+
+    rows.forEach(row=>{
+
+        const vehicle =
+            row.children[0].innerText.toLowerCase();
+
+        const driver =
+            row.children[1].innerText.toLowerCase();
+
+        const route =
+            row.children[2].innerText.toLowerCase();
+
+        const departure =
+            row.children[3].innerText.toLowerCase();
+
+        const arrival =
+            row.children[4].innerText.toLowerCase();
+
+        const rowStatus =
+            row.children[5].innerText.toLowerCase();
+
+        const matchesSearch =
+
+            vehicle.includes(search)
+
+            ||
+
+            driver.includes(search)
+
+            ||
+
+            route.includes(search)
+
+            ||
+
+            departure.includes(search)
+
+            ||
+
+            arrival.includes(search);
+
+        const matchesStatus =
+
+            status === ""
+
+            ||
+
+            rowStatus === status;
+
+        if(matchesSearch && matchesStatus){
+
+            row.style.display = "";
+
+            visible++;
+
+        }
+
+        else{
+
+            row.style.display = "none";
+
+        }
+
+    });
+
+    document.getElementById("tripResults").innerHTML =
+
+        `${visible} trip(s) found`;
+
+}
+
+// =======================================
+// Trip Form
+// =======================================
+
+async function showTripForm() {
+
+    const vehicles =
+        await (await fetch(`${API_BASE_URL}/vehicles/`,{
+            headers:{
+                Authorization:`Token ${localStorage.getItem("token")}`
+            }
+        })).json();
+
+    const drivers =
+        await (await fetch(`${API_BASE_URL}/drivers/`,{
+            headers:{
+                Authorization:`Token ${localStorage.getItem("token")}`
+            }
+        })).json();
+
+    const routes =
+        await (await fetch(`${API_BASE_URL}/routes/`,{
+            headers:{
+                Authorization:`Token ${localStorage.getItem("token")}`
+            }
+        })).json();
+
+    let vehicleOptions="";
+    let driverOptions="";
+    let routeOptions="";
+
+    vehicles.forEach(v=>{
+        vehicleOptions+=`<option value="${v.id}">
+            ${v.plate_number}
+        </option>`;
+    });
+
+    drivers.forEach(d=>{
+        driverOptions+=`<option value="${d.id}">
+            ${d.driver_name}
+        </option>`;
+    });
+
+    routes.forEach(r=>{
+        routeOptions+=`<option value="${r.id}">
+            ${r.origin} → ${r.destination}
+        </option>`;
+    });
+
+    document.getElementById("tripForm").innerHTML=`        <div class="vehicle-form">
+
+            <h3>Schedule Trip</h3>
+
+            <label>Vehicle</label>
+
+            <select id="vehicle">
+
+                ${vehicleOptions}
+
+            </select>
+
+            <label>Driver</label>
+
+            <select id="driver">
+
+                ${driverOptions}
+
+            </select>
+
+            <label>Route</label>
+
+            <select id="route">
+
+                ${routeOptions}
+
+            </select>
+
+            <label>Departure Time</label>
+
+            <input
+                id="departure"
+                type="datetime-local"
+            >
+
+            <label>Arrival Time</label>
+
+            <input
+                id="arrival"
+                type="datetime-local"
+            >
+
+            <label>Status</label>
+
+            <select id="status">
+
+                <option value="planned">
+                    Planned
+                </option>
+
+                <option value="ongoing">
+                    Ongoing
+                </option>
+
+                <option value="completed">
+                    Completed
+                </option>
+
+            </select>
+
+            <label>Remarks</label>
+
+            <textarea
+                id="remarks"
+                placeholder="Remarks"
+            ></textarea>
+
+            <br><br>
+
+            <button
+                class="btn btn-primary"
+                onclick="saveTrip()">
+
+                Save Trip
+
+            </button>
+
+            <hr>
+
+        </div>
+
+    `;
+
+}
+
+
+
+// =======================================
+// Save Trip
+// =======================================
+
+async function saveTrip() {
+
+    const response = await fetch(
+
+        `${API_BASE_URL}/trips/`,
+
+        {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                Authorization:
+                    `Token ${localStorage.getItem("token")}`
+
+            },
+
+            body: JSON.stringify({
+
+                vehicle:
+                    document.getElementById("vehicle").value,
+
+                driver:
+                    document.getElementById("driver").value,
+
+                route:
+                    document.getElementById("route").value,
+
+                departure_time:
+                    document.getElementById("departure").value,
+
+                arrival_time:
+                    document.getElementById("arrival").value,
+
+                status:
+                    document.getElementById("status").value,
+
+                remarks:
+                    document.getElementById("remarks").value
+
+            })
+
+        }
+
+    );
+
+    if (response.ok) {
+
+        alert("Trip Scheduled Successfully");
+
+        loadCounts();
+
+        loadTrips();
+
+    }
+
+    else {
+
+        const error = await response.json();
+
+        console.log(error);
+
+        alert("Failed to schedule trip.");
+
+    }
+
+}
+// =======================================
+// Edit Trip
+// =======================================
+
+async function editTrip(id) {
+
+    const tripResponse = await fetch(
+        `${API_BASE_URL}/trips/${id}/`,
+        {
+            headers: {
+                Authorization: `Token ${localStorage.getItem("token")}`
+            }
+        }
+    );
+
+    const trip = await tripResponse.json();
+
+    const vehicles = await (await fetch(
+        `${API_BASE_URL}/vehicles/`,
+        {
+            headers: {
+                Authorization: `Token ${localStorage.getItem("token")}`
+            }
+        }
+    )).json();
+
+    const drivers = await (await fetch(
+        `${API_BASE_URL}/drivers/`,
+        {
+            headers: {
+                Authorization: `Token ${localStorage.getItem("token")}`
+            }
+        }
+    )).json();
+
+    const routes = await (await fetch(
+        `${API_BASE_URL}/routes/`,
+        {
+            headers: {
+                Authorization: `Token ${localStorage.getItem("token")}`
+            }
+        }
+    )).json();
+
+    let vehicleOptions = "";
+    let driverOptions = "";
+    let routeOptions = "";
+
+    vehicles.forEach(vehicle => {
+
+        vehicleOptions += `
+            <option
+                value="${vehicle.id}"
+                ${vehicle.id == trip.vehicle ? "selected" : ""}>
+
+                ${vehicle.plate_number}
+
+            </option>
+        `;
+
+    });
+
+    drivers.forEach(driver => {
+
+        driverOptions += `
+            <option
+                value="${driver.id}"
+                ${driver.id == trip.driver ? "selected" : ""}>
+
+                ${driver.driver_name}
+
+            </option>
+        `;
+
+    });
+
+    routes.forEach(route => {
+
+        routeOptions += `
+            <option
+                value="${route.id}"
+                ${route.id == trip.route ? "selected" : ""}>
+
+                ${route.origin} → ${route.destination}
+
+            </option>
+        `;
+
+    });
+
+    document.getElementById("tripForm").innerHTML = `
+
+        <div class="vehicle-form">
+
+            <h3>Edit Trip</h3>
+
+            <label>Vehicle</label>
+
+            <select id="editVehicle">
+
+                ${vehicleOptions}
+
+            </select>
+
+            <label>Driver</label>
+
+            <select id="editDriver">
+
+                ${driverOptions}
+
+            </select>
+
+            <label>Route</label>
+
+            <select id="editRoute">
+
+                ${routeOptions}
+
+            </select>
+
+            <label>Departure Time</label>
+
+            <input
+                id="editDeparture"
+                type="datetime-local"
+                value="${trip.departure_time.substring(0,16)}"
+            >
+
+            <label>Arrival Time</label>
+
+            <input
+                id="editArrival"
+                type="datetime-local"
+                value="${trip.arrival_time.substring(0,16)}"
+            >
+
+            <label>Status</label>
+
+            <select id="editStatus">
+
+                <option value="planned"
+                    ${trip.status=="planned"?"selected":""}>
+                    Planned
+                </option>
+
+                <option value="ongoing"
+                    ${trip.status=="ongoing"?"selected":""}>
+                    Ongoing
+                </option>
+
+                <option value="completed"
+                    ${trip.status=="completed"?"selected":""}>
+                    Completed
+                </option>
+
+            </select>
+
+            <label>Remarks</label>
+
+            <textarea id="editRemarks">${trip.remarks}</textarea>
+
+            <br><br>
+
+            <button
+                class="btn btn-warning"
+                onclick="updateTrip(${id})">
+
+                Update Trip
+
+            </button>
+
+        </div>
+
+    `;
+
+}
+// =======================================
+// Update Trip
+// =======================================
+
+async function updateTrip(id) {
+
+    const response = await fetch(
+
+        `${API_BASE_URL}/trips/${id}/`,
+
+        {
+
+            method: "PUT",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                Authorization:
+                    `Token ${localStorage.getItem("token")}`
+
+            },
+
+            body: JSON.stringify({
+
+                vehicle:
+                    document.getElementById("editVehicle").value,
+
+                driver:
+                    document.getElementById("editDriver").value,
+
+                route:
+                    document.getElementById("editRoute").value,
+
+                departure_time:
+                    document.getElementById("editDeparture").value,
+
+                arrival_time:
+                    document.getElementById("editArrival").value,
+
+                status:
+                    document.getElementById("editStatus").value,
+
+                remarks:
+                    document.getElementById("editRemarks").value
+
+            })
+
+        }
+
+    );
+
+    if (response.ok) {
+
+        alert("Trip Updated Successfully");
+
+        loadCounts();
+
+        loadTrips();
+
+    }
+
+    else {
+
+        const error = await response.json();
+
+        console.log(error);
+
+        alert("Failed to update trip.");
+
+    }
+
+}
+
+
+
+// =======================================
+// Delete Trip
+// =======================================
+
+async function deleteTrip(id) {
+
+    if (!confirm("Are you sure you want to delete this trip?")) {
+        return;
+    }
+
+    const response = await fetch(
+
+        `${API_BASE_URL}/trips/${id}/`,
+
+        {
+
+            method: "DELETE",
+
+            headers: {
+
+                Authorization:
+                    `Token ${localStorage.getItem("token")}`
+
+            }
+
+        }
+
+    );
+
+    if (response.ok) {
+
+        alert("Trip Deleted Successfully");
+
+        loadCounts();
+
+        loadTrips();
+
+    }
+
+    else {
+
+        const error = await response.json();
+
+        console.log(error);
+
+        alert("Failed to delete trip.");
+
+    }
+
+}
+
+
+
+// =======================================
+// Search Trips
+// =======================================
+
+async function searchTrips(searchValue) {
+
+    const response = await fetch(
+
+        `${API_BASE_URL}/trips/?search=${searchValue}`,
+
+        {
+
+            headers: {
+
+                Authorization:
+                    `Token ${localStorage.getItem("token")}`
+
+            }
+
+        }
+
+    );
+
+    const trips = await response.json();
+
+    const tbody = document.getElementById("tripTableBody");
+
+    tbody.innerHTML = "";
+
+    trips.forEach(trip => {
+
+        tbody.innerHTML += `
+
+            <tr>
+
+                <td>${trip.vehicle_plate}</td>
+
+                <td>${trip.driver_name}</td>
+
+                <td>${trip.route_name}</td>
+
+                <td>${trip.departure_time}</td>
+
+                <td>${trip.arrival_time}</td>
+
+                <td>${trip.status}</td>
+
+                <td>
+
+                    <button
+                        class="btn btn-warning"
+                        onclick="editTrip(${trip.id})">
+
+                        Edit
+
+                    </button>
+
+                    <button
+                        class="btn btn-danger"
+                        onclick="deleteTrip(${trip.id})">
+
+                        Delete
+
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+}
