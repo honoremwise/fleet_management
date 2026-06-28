@@ -14,6 +14,33 @@ class RegisterDriverSerializer(serializers.Serializer):
     license_number = serializers.CharField(max_length=100)
     address = serializers.CharField(max_length=255)
 
+    # -----------------------------
+    # VALIDATIONS
+    # -----------------------------
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(
+                "A user with this username already exists."
+            )
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
+        return value
+
+    def validate_license_number(self, value):
+        if Driver.objects.filter(license_number=value).exists():
+            raise serializers.ValidationError(
+                "This license number is already registered."
+            )
+        return value
+
+    # -----------------------------
+    # CREATE DRIVER
+    # -----------------------------
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data["username"],

@@ -405,15 +405,23 @@ async function saveDriver() {
 
     }
 
-    else {
+ else {
 
-        const error = await response.json();
+    const error = await response.json();
 
-        console.log(error);
+    console.log(error);
 
-        alert("Failed to register driver.");
+    let message = "";
+
+    for (const key in error) {
+
+        message += `${key}: ${error[key].join(", ")}\n`;
 
     }
+
+    alert(message);
+
+}
 
 }
 
@@ -423,6 +431,82 @@ async function saveDriver() {
 // =======================================
 // Edit Driver
 // =======================================
+
+// async function editDriver(id) {
+
+//     const response = await fetch(
+
+//         `${API_BASE_URL}/drivers/${id}/`,
+
+//         {
+
+//             headers: {
+
+//                 Authorization:
+//                     `Token ${localStorage.getItem("token")}`
+
+//             }
+
+//         }
+
+//     );
+
+//     const driver = await response.json();
+
+//     document.getElementById("driverForm").innerHTML = `
+
+//         <div class="vehicle-form">
+
+//             <h3>Edit Driver</h3>
+
+//             <input
+//                 id="editPhone"
+//                 value="${driver.phone}"
+//             >
+
+//             <input
+//                 id="editLicense"
+//                 value="${driver.license_number}"
+//             >
+
+//             <input
+//                 id="editAddress"
+//                 value="${driver.address}"
+//             >
+//                         <select id="editStatus">
+
+//                 <option value="available"
+//                     ${driver.status === "available" ? "selected" : ""}>
+//                     Available
+//                 </option>
+
+//                 <option value="on_trip"
+//                     ${driver.status === "on_trip" ? "selected" : ""}>
+//                     On Trip
+//                 </option>
+
+//                 <option value="off_duty"
+//                     ${driver.status === "off_duty" ? "selected" : ""}>
+//                     Off Duty
+//                 </option>
+
+//             </select>
+
+//             <br><br>
+
+//             <button
+//                 class="btn btn-warning"
+//                 onclick="updateDriver(${id}, ${driver.user})">
+
+//                 Update Driver
+
+//             </button>
+
+//         </div>
+
+//     `;
+
+// }
 
 async function editDriver(id) {
 
@@ -452,43 +536,72 @@ async function editDriver(id) {
             <h3>Edit Driver</h3>
 
             <input
+                id="editUsername"
+                placeholder="Username"
+                value="${driver.username}"
+            >
+
+            <input
+                id="editFirstName"
+                placeholder="First Name"
+                value="${driver.first_name}"
+            >
+
+            <input
+                id="editLastName"
+                placeholder="Last Name"
+                value="${driver.last_name}"
+            >
+
+            <input
+                id="editEmail"
+                placeholder="Email"
+                value="${driver.email}"
+            >
+
+            <input
                 id="editPhone"
+                placeholder="Phone"
                 value="${driver.phone}"
             >
 
             <input
                 id="editLicense"
+                placeholder="License Number"
                 value="${driver.license_number}"
             >
 
             <input
                 id="editAddress"
+                placeholder="Address"
                 value="${driver.address}"
             >
-                        <select id="editStatus">
 
-                <option value="available"
-                    ${driver.status === "available" ? "selected" : ""}>
+            <select id="editStatus">
+
+                <option
+                    value="available"
+                    ${driver.status==="available"?"selected":""}>
                     Available
                 </option>
 
-                <option value="on_trip"
-                    ${driver.status === "on_trip" ? "selected" : ""}>
+                <option
+                    value="on_trip"
+                    ${driver.status==="on_trip"?"selected":""}>
                     On Trip
                 </option>
 
-                <option value="off_duty"
-                    ${driver.status === "off_duty" ? "selected" : ""}>
+                <option
+                    value="off_duty"
+                    ${driver.status==="off_duty"?"selected":""}>
                     Off Duty
                 </option>
 
             </select>
 
-            <br><br>
-
             <button
                 class="btn btn-warning"
-                onclick="updateDriver(${id}, ${driver.user})">
+                onclick="updateDriver(${driver.id})">
 
                 Update Driver
 
@@ -500,13 +613,71 @@ async function editDriver(id) {
 
 }
 
-
-
 // =======================================
 // Update Driver
 // =======================================
 
-async function updateDriver(id, userId) {
+// async function updateDriver(id, userId) {
+
+//     const response = await fetch(
+
+//         `${API_BASE_URL}/drivers/${id}/`,
+
+//         {
+
+//             method: "PUT",
+
+//             headers: {
+
+//                 "Content-Type": "application/json",
+
+//                 Authorization:
+//                     `Token ${localStorage.getItem("token")}`
+
+//             },
+
+//             body: JSON.stringify({
+
+//                 user: userId,
+
+//                 phone:
+//                     document.getElementById("editPhone").value,
+
+//                 license_number:
+//                     document.getElementById("editLicense").value,
+
+//                 address:
+//                     document.getElementById("editAddress").value,
+
+//                 status:
+//                     document.getElementById("editStatus").value
+
+//             })
+
+//         }
+
+//     );
+
+//     if (response.ok) {
+
+//         alert("Driver Updated Successfully");
+
+//         loadDrivers();
+
+//     }
+
+//     else {
+
+//         const error = await response.json();
+
+//         console.log(error);
+
+//         alert("Failed to update driver.");
+
+//     }
+
+// }
+async function updateDriver(id) {
 
     const response = await fetch(
 
@@ -514,20 +685,30 @@ async function updateDriver(id, userId) {
 
         {
 
-            method: "PUT",
+            method:"PUT",
 
-            headers: {
+            headers:{
 
-                "Content-Type": "application/json",
+                "Content-Type":"application/json",
 
                 Authorization:
                     `Token ${localStorage.getItem("token")}`
 
             },
 
-            body: JSON.stringify({
+            body:JSON.stringify({
 
-                user: userId,
+                username:
+                    document.getElementById("editUsername").value,
+
+                first_name:
+                    document.getElementById("editFirstName").value,
+
+                last_name:
+                    document.getElementById("editLastName").value,
+
+                email:
+                    document.getElementById("editEmail").value,
 
                 phone:
                     document.getElementById("editPhone").value,
@@ -547,15 +728,15 @@ async function updateDriver(id, userId) {
 
     );
 
-    if (response.ok) {
+    if(response.ok){
 
-        alert("Driver Updated Successfully");
+        alert("Driver updated successfully.");
 
         loadDrivers();
 
     }
 
-    else {
+    else{
 
         const error = await response.json();
 

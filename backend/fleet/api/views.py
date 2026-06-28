@@ -27,36 +27,105 @@ from .serializers import (
 from .auth_serializers import RegisterDriverSerializer
 
 
-# -------------------------
+# ==========================================
 # VEHICLE
-# -------------------------
+# ==========================================
+
 class VehicleViewSet(viewsets.ModelViewSet):
     queryset = Vehicle.objects.all()
     serializer_class = VehicleSerializer
 
+
+# ==========================================
+# VEHICLE INSPECTION
+# ==========================================
+
 class VehicleInspectionViewSet(viewsets.ModelViewSet):
     queryset = VehicleInspection.objects.select_related("vehicle").all()
     serializer_class = VehicleInspectionSerializer
-# -------------------------
+
+
+# ==========================================
 # DRIVER
-# -------------------------
+# ==========================================
+
 class DriverViewSet(viewsets.ModelViewSet):
+
     queryset = Driver.objects.select_related("user").all()
     serializer_class = DriverSerializer
 
+    def update(self, request, *args, **kwargs):
 
-# -------------------------
+        driver = self.get_object()
+
+        user = driver.user
+
+        # Update User table
+        user.username = request.data.get(
+            "username",
+            user.username
+        )
+
+        user.first_name = request.data.get(
+            "first_name",
+            user.first_name
+        )
+
+        user.last_name = request.data.get(
+            "last_name",
+            user.last_name
+        )
+
+        user.email = request.data.get(
+            "email",
+            user.email
+        )
+
+        user.save()
+
+        # Update Driver table
+        driver.phone = request.data.get(
+            "phone",
+            driver.phone
+        )
+
+        driver.license_number = request.data.get(
+            "license_number",
+            driver.license_number
+        )
+
+        driver.address = request.data.get(
+            "address",
+            driver.address
+        )
+
+        driver.status = request.data.get(
+            "status",
+            driver.status
+        )
+
+        driver.save()
+
+        serializer = self.get_serializer(driver)
+
+        return Response(serializer.data)
+
+
+# ==========================================
 # ROUTE
-# -------------------------
+# ==========================================
+
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
 
 
-# -------------------------
+# ==========================================
 # TRIP
-# -------------------------
+# ==========================================
+
 class TripViewSet(viewsets.ModelViewSet):
+
     queryset = Trip.objects.select_related(
         "vehicle",
         "driver__user",
@@ -66,55 +135,90 @@ class TripViewSet(viewsets.ModelViewSet):
     serializer_class = TripSerializer
 
     def get_queryset(self):
+
         queryset = super().get_queryset()
 
         search = self.request.query_params.get("search")
 
         if search:
+
             queryset = queryset.filter(
+
                 Q(vehicle__plate_number__icontains=search)
-                | Q(driver__user__first_name__icontains=search)
-                | Q(driver__user__last_name__icontains=search)
+
+                |
+
+                Q(driver__user__first_name__icontains=search)
+
+                |
+
+                Q(driver__user__last_name__icontains=search)
+
             )
 
         return queryset
 
     @action(detail=False, methods=["get"])
     def active(self, request):
+
         trips = Trip.objects.filter(status="ongoing")
-        serializer = self.get_serializer(trips, many=True)
+
+        serializer = self.get_serializer(
+            trips,
+            many=True
+        )
+
         return Response(serializer.data)
 
 
-# -------------------------
+# ==========================================
 # REGISTER DRIVER
-# -------------------------
+# ==========================================
+
 class RegisterDriverView(APIView):
+
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = RegisterDriverSerializer(data=request.data)
+
+        serializer = RegisterDriverSerializer(
+            data=request.data
+        )
 
         if serializer.is_valid():
+
             driver = serializer.save()
 
-            token, created = Token.objects.get_or_create(user=driver.user)
+            token, _ = Token.objects.get_or_create(
+                user=driver.user
+            )
 
             return Response(
+
                 {
                     "message": "Driver registered successfully",
                     "token": token.key,
                 },
+
                 status=status.HTTP_201_CREATED,
+
             )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+
+            serializer.errors,
+
+            status=status.HTTP_400_BAD_REQUEST,
+
+        )
 
 
-# -------------------------
+# ==========================================
 # LOGIN
-# -------------------------
+# ==========================================
+
 class LoginView(APIView):
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -122,37 +226,53 @@ class LoginView(APIView):
         username = request.data.get("username")
         password = request.data.get("password")
 
-        user = authenticate(username=username, password=password)
+        user = authenticate(
 
-        if user is None:
-            return Response(
-                {"error": "Invalid username or password"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+            username=username,
 
-        token, created = Token.objects.get_or_create(user=user)
+            password=password,
 
-        return Response(
-            {
-                "token": token.key,
-                "username": user.username,
-                "full_name": user.get_full_name(),
-            }
         )
 
+        if user is None:
 
-# -------------------------
+            return Response(
+
+                {"error": "Invalid username or password"},
+
+                status=status.HTTP_401_UNAUTHORIZED,
+
+            )
+
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response({
+
+            "token": token.key,
+
+            "username": user.username,
+
+            "full_name": user.get_full_name(),
+
+        })
+
+
+# ==========================================
 # LOGOUT
-# -------------------------
+# ==========================================
+
 class LogoutView(APIView):
 
     def post(self, request):
+
         if hasattr(request.user, "auth_token"):
+
             request.user.auth_token.delete()
 
         return Response(
+
             {"message": "Logged out successfully"},
+
             status=status.HTTP_200_OK,
+
         )
-    
-    

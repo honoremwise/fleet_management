@@ -8,7 +8,7 @@ if (!token) {
     window.location.href = "login.html";
 }
 
-document.getElementById("username").textContent =
+document.getElementById("driverusername").textContent =
     localStorage.getItem("username") || "User";
 
 const headers = {
